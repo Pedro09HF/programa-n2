@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+<<<<<<< HEAD
 #include <limits.h>
 
 #define M 128
@@ -114,5 +115,6 @@ int main(int argc, char *argv[]) {
     }
 
     free(d);
+
     return 0;
 }
