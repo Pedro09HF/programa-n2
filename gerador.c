@@ -13,6 +13,14 @@ typedef struct {
     int tipo;
 } Sensor;
 
+int tipo_para_codigo(const char *tipo_str) {
+    if (strcmp(tipo_str, "CONJ_Z") == 0) return 0;     
+    if (strcmp(tipo_str, "BINARIO") == 0) return 1;    
+    if (strcmp(tipo_str, "CONJ_Q") == 0) return 2;     
+    if (strcmp(tipo_str, "TEXTO") == 0) return 3;      
+    return -1;
+}
+
 void gerar_valor(int tipo, char *saida) {
     if ((float)rand() / RAND_MAX < PROBABILIDADE_NULO) {
         strcpy(saida, "NULL");
@@ -20,10 +28,10 @@ void gerar_valor(int tipo, char *saida) {
     }
 
     switch (tipo) {
-        case 0: sprintf(saida, "%d", rand() % 1000); break;
-        case 1: sprintf(saida, "%s", rand() % 2 ? "verdadeiro" : "falso"); break;
-        case 2: sprintf(saida, "%.2f", (float)(rand() % 1000) / 10.0f); break;
-        case 3: {
+        case 0: sprintf(saida, "%d", rand() % 1000); break;               
+        case 1: sprintf(saida, "%s", rand() % 2 ? "verdadeiro" : "falso"); break; 
+        case 2: sprintf(saida, "%.2f", (float)(rand() % 1000) / 10.0f); break;   
+        case 3: {                                                              
             char tmp[LIMITE_TAMANHO_STRING + 1] = {0};
             int length = 1 + rand() % LIMITE_TAMANHO_STRING;
             for (int i = 0; i < length; i++)
@@ -37,7 +45,7 @@ void gerar_valor(int tipo, char *saida) {
 int main(int argc, char *argv[]) {
     if (argc < 6 || (argc - 2) % 2 != 0) {
         printf("Uso: %s inicio_unix fim_unix sensor1 tipo1 sensor2 tipo2 ...\n", argv[0]);
-        printf("Tipos: 0=int, 1=bool, 2=float, 3=string\n");
+        printf("Tipos: CONJ_Z=int, BINARIO=bool, CONJ_Q=float, TEXTO=string\n");
         return 1;
     }
 
@@ -59,11 +67,13 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < total_sensores; i++) {
         strncpy(sensores[i].nome, argv[3 + 2 * i], 49);
         sensores[i].nome[49] = '\0';
-        sensores[i].tipo = atoi(argv[4 + 2 * i]);
-        if (sensores[i].tipo < 0 || sensores[i].tipo > 3) {
-            printf("Erro: Tipo inválido para sensor %s (%d)\n", sensores[i].nome, sensores[i].tipo);
+
+        int tipo = tipo_para_codigo(argv[4 + 2 * i]);
+        if (tipo == -1) {
+            printf("Erro: Tipo inválido para sensor %s (%s)\n", sensores[i].nome, argv[4 + 2 * i]);
             return 1;
         }
+        sensores[i].tipo = tipo;
     }
 
     srand(time(NULL));

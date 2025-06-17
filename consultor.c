@@ -33,26 +33,31 @@ int busca_binaria(FILE *arquivo, long alvo, int total_registros) {
 
         if (is_null_value(registro.valor)) {
             int original_meio = meio;
-            while (meio < dir) {
-                meio++;
-                fseek(arquivo, meio * sizeof(RegistroSensor), SEEK_SET);
+            int temp_meio = meio;
+
+            while (temp_meio < dir) {
+                temp_meio++;
+                fseek(arquivo, temp_meio * sizeof(RegistroSensor), SEEK_SET);
                 if (fread(&registro, sizeof(RegistroSensor), 1, arquivo) != 1) break;
                 if (!is_null_value(registro.valor)) break;
             }
             if (is_null_value(registro.valor)) {
-                meio = original_meio;
-                while (meio > esq) {
-                    meio--;
-                    fseek(arquivo, meio * sizeof(RegistroSensor), SEEK_SET);
+                temp_meio = original_meio;
+                while (temp_meio > esq) {
+                    temp_meio--;
+                    fseek(arquivo, temp_meio * sizeof(RegistroSensor), SEEK_SET);
                     if (fread(&registro, sizeof(RegistroSensor), 1, arquivo) != 1) break;
                     if (!is_null_value(registro.valor)) break;
                 }
             }
             if (is_null_value(registro.valor)) {
-                if (registro.instante < alvo) esq = original_meio + 1;
-                else dir = original_meio - 1;
+                if (registro.instante > alvo)  
+                    dir = meio - 1;
+                else
+                    esq = meio + 1;
                 continue;
             }
+            meio = temp_meio;
         }
 
         long diff = labs(registro.instante - alvo);
@@ -61,8 +66,10 @@ int busca_binaria(FILE *arquivo, long alvo, int total_registros) {
             idx_proximo = meio;
         }
 
-        if (registro.instante < alvo) esq = meio + 1;
-        else dir = meio - 1;
+        if (registro.instante > alvo)  
+            dir = meio - 1;
+        else
+            esq = meio + 1;
     }
     return idx_proximo;
 }
@@ -81,25 +88,31 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    fseek(arquivo, 0, SEEK_END);
+    if (fseek(arquivo, 0, SEEK_END) != 0) {
+        perror("Erro ao posicionar no fim do arquivo");
+        fclose(arquivo);
+        return 1;
+    }
+
     long file_size = ftell(arquivo);
     if (file_size == -1) {
         perror("Erro ao obter tamanho do arquivo");
         fclose(arquivo);
         return 1;
     }
-    int total_registros = file_size / sizeof(RegistroSensor);
-    fseek(arquivo, 0, SEEK_SET);
 
+    int total_registros = file_size / sizeof(RegistroSensor);
     if (total_registros == 0) {
         fprintf(stderr, "Arquivo vazio ou formato inválido\n");
         fclose(arquivo);
         return 1;
     }
 
-    long timestamp_alvo;
+    rewind(arquivo);
+
     char *endptr;
-    timestamp_alvo = strtol(argv[2], &endptr, 10);
+    errno = 0;
+    long timestamp_alvo = strtol(argv[2], &endptr, 10);
     if (*endptr != '\0' || errno == ERANGE) {
         fprintf(stderr, "Timestamp inválido: %s\n", argv[2]);
         fclose(arquivo);

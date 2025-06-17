@@ -21,7 +21,11 @@ typedef struct {
 } RegistroSensor;
 
 int comparar_instantes(const void *a, const void *b) {
-    return ((RegistroSensor *)a)->instante - ((RegistroSensor *)b)->instante;
+    RegistroSensor *ra = (RegistroSensor *)a;
+    RegistroSensor *rb = (RegistroSensor *)b;
+    if (ra->instante < rb->instante) return 1;  
+    else if (ra->instante > rb->instante) return -1;
+    else return 0;
 }
 
 bool string_vazia(const char *str) {
